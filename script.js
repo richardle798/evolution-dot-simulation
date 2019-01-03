@@ -1,10 +1,11 @@
 $(document).ready(() => {
     var board;
-    var columnCount = 64;
-    var rowCount = 64;
+    const columnCount = 64;
+    const rowCount = 64;
     var cellSize;
     var speciesArr;
     var iterationCount;
+    const maxIteration = 100;
 
     firstBoardInit();
 
@@ -22,22 +23,73 @@ $(document).ready(() => {
         ctx.stroke();
     }
 
-    function updateBoard() {
-        if(iterationCount == maxIteration) {
-            boardInit();
+    function calculateWeight(speciesTile, terrainTile) {
+        let species = speciesArr[speciesTile.species];
+        
+        return species.attributeOne * terrainTile.attributeOne +
+            species.attributeTwo * terrainTile.attributeTwo +
+            species.attributeThree * terrainTile.attributeThree;
+    }
+
+    function updateTile(x,y) {
+        let weightSum = 0;
+        for (let yOffset = -1; yOffset <= 1; yOffset++) {
+            for (let xOffset = -1; xOffset <= 1; xOffset++) {
+                let newX = x + xOffset;
+                let newY = y + yOffset;
+                if (newY < 0 || newY > board.length - 1 ||
+                    newX < 0 || newX > board[0].length - 1) {
+                    continue;
+                }
+
+                weightSum += calculateWeight(board[newY][newX],board[y][x]);
+            }
         }
-        else {
-            
+
+        if(weightSum === 0) {
+            return board[y][x];
         }
+
+        let randomWeight = Math.floor(Math.random()*weightSum);
+        let currentWeightSum = 0;
+
+        for (let yOffset = -1; yOffset <= 1; yOffset++) {
+            for (let xOffset = -1; xOffset <= 1; xOffset++) {
+                let newX = x + xOffset;
+                let newY = y + yOffset;
+                if (newY < 0 || newY > board.length - 1 ||
+                    newX < 0 || newX > board[0].length - 1) {
+                    continue;
+                }
+
+                currentWeightSum += calculateWeight(board[newY][newX],board[y][x]);
+                if(randomWeight < currentWeightSum){
+                    let oldTile = board[y][x];
+                    let newTile = {
+                        species: board[newY][newX].species,
+                        attributeOne: oldTile.attributeOne,
+                        attributeTwo: oldTile.attributeTwo,
+                        attributeThree: oldTile.attributeThree
+                    };
+
+                    return newTile;
+                }
+            }
+        }
+        console.log("we've got a problem!");
+        return null;
     }
 
     function drawBoard() {
         let canvas = $('.board')[0];
 
-        let cellLength = Math.floor(Math.min($(window).height() * .05, $(window).width() * .05));
+        let maxCanvasSize = Math.min($(window).height() * 0.75, $(window).width() * 0.9);
+        let maxDivision = Math.max(columnCount, rowCount);	
+        let cellLength = Math.floor(maxCanvasSize / maxDivision);	
+        let canvasLength = cellLength * maxDivision;
 
-        canvas.height = cellLength * rowCount;
-        canvas.width = cellLength * columnCount;
+        canvas.height = canvasLength;
+        canvas.width = canvasLength;
         cellSize = cellLength;
 
         for (let y = 0; y < rowCount; y++) {
@@ -49,7 +101,25 @@ $(document).ready(() => {
 
     function firstBoardInit() {
         boardInit();
-        setInterval(updateBoard(), 1000);
+        setInterval(function updateBoard() {
+            if(iterationCount === maxIteration) {
+                boardInit();
+            }
+            else {
+                let newBoard = new Array();
+                for (let y = 0; y < rowCount; y++) {
+                    let row = new Array();
+                    for (let x = 0; x < columnCount; x++) {
+                        let updatedTile = updateTile(x,y);
+                        row.push(updatedTile);
+                    }
+                    newBoard.push(row);
+                }
+                board = newBoard;
+                drawBoard();
+                iterationCount++;
+            }
+        }, 100);
     }
 
     function boardInit() {
@@ -93,14 +163,14 @@ $(document).ready(() => {
         }
 
         board = new Array();
-        for (var y = 0; y < rowCount; y++) {
+        for (let y = 0; y < rowCount; y++) {
             let row = new Array();
-            for (var x = 0; x < columnCount; x++) {
+            for (let x = 0; x < columnCount; x++) {
                 let tile = {
                     species: 0,
-                    attributeOne: Math.floor(Math.random() * 5),
-                    attributeTwo: Math.floor(Math.random() * 5),
-                    attributeThree: Math.floor(Math.random() * 5)
+                    attributeOne: Math.ceil(Math.random() * 5),
+                    attributeTwo: Math.ceil(Math.random() * 5),
+                    attributeThree: Math.ceil(Math.random() * 5)
                 };
                 row.push(tile);
             }
@@ -111,7 +181,7 @@ $(document).ready(() => {
         for (let i = 1; i < speciesArr.length; i++) {
             let x = Math.floor(Math.random() * columnCount);
             let y = Math.floor(Math.random() * rowCount);
-            while (board[y][x] != 0) {
+            while (board[y][x].species != 0) {
                 x = Math.floor(Math.random() * columnCount);
                 y = Math.floor(Math.random() * rowCount);
             }
@@ -121,45 +191,5 @@ $(document).ready(() => {
 
         iterationCount = 0;
         drawBoard();
-    }
-
-    function calculateAdjacentFlags(x, y) {
-        let adjacentFlags = 0;
-
-        for (var yOffset = -1; yOffset <= 1; yOffset++) {
-            for (var xOffset = -1; xOffset <= 1; xOffset++) {
-                if (yOffset == 0 && xOffset == 0) {
-                    continue;
-                }
-                if (isFlagged(x + xOffset, y + yOffset)) {
-                    adjacentFlags++;
-                }
-            }
-        }
-
-        return adjacentFlags;
-    }
-
-    function revealNeighbors(x, y) {
-        for (var yOffset = -1; yOffset <= 1; yOffset++) {
-            for (var xOffset = -1; xOffset <= 1; xOffset++) {
-                if (yOffset == 0 && xOffset == 0) {
-                    continue;
-                }
-                let newX = x + xOffset;
-                let newY = y + yOffset;
-                if (newY < 0 || newY > board.length - 1 ||
-                    newX < 0 || newX > board[0].length - 1 ||
-                    isFlagged(newX, newY)) {
-                    continue;
-                }
-                let neighbor = board[newY][newX]
-                if (!neighbor.isRevealed) {
-                    neighbor.isRevealed = true;
-                    remainingHiddenTiles--;
-                    updateDisplay(newX, newY);
-                }
-            }
-        }
     }
 });
