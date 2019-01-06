@@ -23,8 +23,13 @@ $(document).ready(() => {
         ctx.stroke();
     }
 
-    function calculateWeight(speciesTile, terrainTile) {
-        let species = speciesArr[speciesTile.species];
+    function calculateWeight(speciesX,speciesY,terrainX,terrainY) {
+        let terrainTile = board[terrainY][terrainX];
+        let species = speciesArr[board[speciesY][speciesX].species];
+
+        if(speciesX === terrainX && speciesY === terrainY && terrainTile.species === 0){
+            return 100;
+        }
         
         return species.attributeOne * terrainTile.attributeOne +
             species.attributeTwo * terrainTile.attributeTwo +
@@ -42,7 +47,7 @@ $(document).ready(() => {
                     continue;
                 }
 
-                weightSum += calculateWeight(board[newY][newX],board[y][x]);
+                weightSum += calculateWeight(newX,newY,x,y);
             }
         }
 
@@ -62,7 +67,7 @@ $(document).ready(() => {
                     continue;
                 }
 
-                currentWeightSum += calculateWeight(board[newY][newX],board[y][x]);
+                currentWeightSum += calculateWeight(newX,newY,x,y);
                 if(randomWeight < currentWeightSum){
                     let oldTile = board[y][x];
                     let newTile = {
@@ -157,9 +162,9 @@ $(document).ready(() => {
 
         for (let i = 1; i < speciesArr.length; i++) {
             let species = speciesArr[i];
-            species.attributeOne = Math.floor(Math.random() * 5);
-            species.attributeTwo = Math.floor(Math.random() * 5);
-            species.attributeThree = Math.floor(Math.random() * 5);
+            species.attributeOne = Math.floor(Math.random() * 10);
+            species.attributeTwo = Math.floor(Math.random() * 10);
+            species.attributeThree = Math.floor(Math.random() * 10);
         }
 
         board = new Array();
@@ -168,9 +173,9 @@ $(document).ready(() => {
             for (let x = 0; x < columnCount; x++) {
                 let tile = {
                     species: 0,
-                    attributeOne: Math.ceil(Math.random() * 5),
-                    attributeTwo: Math.ceil(Math.random() * 5),
-                    attributeThree: Math.ceil(Math.random() * 5)
+                    attributeOne: Math.ceil(Math.random() * 10),
+                    attributeTwo: Math.ceil(Math.random() * 10),
+                    attributeThree: Math.ceil(Math.random() * 10)
                 };
                 row.push(tile);
             }
