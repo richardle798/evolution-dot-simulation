@@ -119,7 +119,7 @@ $(document).ready(() => {
                 drawBoard();
                 iterationCount++;
             }
-        }, 100);
+        }, 50);
     }
 
     function boardInit() {
