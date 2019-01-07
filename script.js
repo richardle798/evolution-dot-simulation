@@ -151,7 +151,7 @@ $(document).ready(() => {
             color: "green"
         };
         let speciesFive = {
-            color: "pink"
+            color: "purple"
         };
 
         speciesArr.push(speciesOne);
